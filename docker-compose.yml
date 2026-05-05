@@ -1,0 +1,45 @@
+services:
+  # --- FRONTEND ---
+  frontend:
+    build: ./frontend-sigmotos
+    container_name: frontend-sigmotos
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend-sigmotos:/app
+      # Esta línea es clave: "bloquea" la carpeta node_modules del contenedor 
+      # para que no se sobrescriba con la de tu PC local
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  # --- BACKEND (Ejemplo con un servicio) ---
+  users_db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+
+  users_service:
+    build: ./sigmotos-backend/users_service
+    container_name: users-service
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./sigmotos-backend/users_service:/app
+    depends_on:
+      - users_db
+    environment:
+      DATABASE_URL: postgresql://user:password@users_db:5432/users_db
+    
+  db:
+    image: postgres:16
+    container_name: sigmotos_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: contraseña
+      POSTGRES_DB: users_db
+    ports:
+        - "5432:5432"
